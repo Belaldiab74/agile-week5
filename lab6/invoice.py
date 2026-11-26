@@ -21,14 +21,15 @@ class InternationalPolicy:
         return hours * INTERNATIONAL_RATE + INTERNATIONAL_SERVICE_FEE
 
 
+POLICIES = {
+    "regular": RegularPolicy(),
+    "scholarship": ScholarshipPolicy(),
+    "international": InternationalPolicy(),
+}
+
+
 def make_invoice(student, kind):
-    if kind == "regular":
-        policy = RegularPolicy()
-    elif kind == "scholarship":
-        policy = ScholarshipPolicy()
-    else:
-        policy = InternationalPolicy()
-    total = policy.fee(student.total_hours)
+    total = POLICIES[kind].fee(student.total_hours)
     text = f"Invoice for {student.student_id}: {int(total)} EGP"
     with open(f"invoice_{student.student_id}.txt", "w", encoding="utf-8") as file:
         file.write(text)
