@@ -27,3 +27,9 @@ class Student:
         if self.total_hours + hours > MAX_HOURS:
             raise RegistrationError(f"credit-hour limit is {MAX_HOURS}")
         self.courses[code] = hours
+
+    def drop(self, code):
+        """Remove a course from the timetable."""
+        if code not in self.courses:
+            raise RegistrationError(f"{code} is not registered")
+        del self.courses[code]
