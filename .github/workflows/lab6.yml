@@ -1,0 +1,108 @@
+name: Lab 6 verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "lab6/**"
+      - ".github/workflows/lab6.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install lab tools
+        run: python -m pip install pytest pytest-cov behave ruff
+      - name: Verify test-first history
+        env:
+          TDD_BASE: "7381cecf2e52ef7ede65002fdaae7f25011632fc"
+          CYCLES: "88c0f3a54aabafa1886412f4f4735e206f4604cb 8d779dc8e349e57acf4bee0ffa6bdf742b8c3b2a 063370826390caa3fa20cfe4c5fcd34eec986843 4511506b206a8d77b7a1f9b22b8c4b557e0f1515"
+          INVOICE_BASELINE: "75a8769e1d23c23ffa19507d5c312050832f8c6a"
+          SIBLING_RED: "3d42bfd729fa4cef8a0ba2066beaa6ecf16cbeca"
+        run: |
+          set -euo pipefail
+          temp_dir="$(mktemp -d)"
+          git log --reverse --format='%h %s' "$TDD_BASE"..HEAD -- lab6
+          previous="$TDD_BASE"
+          for commit in $CYCLES; do
+            mkdir -p "$temp_dir/$commit"
+            git archive "$commit" lab6 | tar -x -C "$temp_dir/$commit"
+            (
+              cd "$temp_dir/$commit/lab6"
+              mv registration.py green.py
+              if git -C "$GITHUB_WORKSPACE" cat-file -e "$previous:lab6/registration.py" 2>/dev/null; then
+                git -C "$GITHUB_WORKSPACE" show "$previous:lab6/registration.py" > registration.py
+              fi
+              set +e
+              python -m pytest -q
+              status=$?
+              set -e
+              case "$status" in
+                1|2) ;;
+                *) echo "Expected a failing test or first-cycle import error"; exit 1 ;;
+              esac
+              mv green.py registration.py
+              python -m pytest -q
+            )
+            previous="$commit"
+          done
+          for commit in "$INVOICE_BASELINE" "$SIBLING_RED"; do
+            mkdir -p "$temp_dir/$commit"
+            git archive "$commit" lab6 | tar -x -C "$temp_dir/$commit"
+          done
+          (
+            cd "$temp_dir/$INVOICE_BASELINE/lab6"
+            python -m pytest -q tests/test_invoice_characterization.py
+          )
+          (
+            cd "$temp_dir/$SIBLING_RED/lab6"
+            set +e
+            python -m pytest -q tests/test_invoice_characterization.py -k sibling
+            status=$?
+            set -e
+            test "$status" -eq 1
+          )
+      - name: Run coverage and Behave
+        working-directory: lab6
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/lab6-evidence"
+          python -m pytest -q --color=no --cov=registration --cov-report=term-missing --cov-fail-under=100 | tee "$RUNNER_TEMP/lab6-evidence/coverage.txt"
+          python -m behave --no-color --format progress | tee "$RUNNER_TEMP/lab6-evidence/behave.txt"
+          python -m ruff check .
+      - name: Capture the coverage report
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/lab6-evidence"
+          python - <<'PY'
+          from html import escape
+          from pathlib import Path
+
+          report = escape(Path("coverage.txt").read_text(encoding="utf-8"))
+          Path("coverage.html").write_text(
+              '<!doctype html><meta charset="utf-8">'
+              '<style>body{margin:28px;background:#fff;color:#142131}'
+              'h1{font:600 20px system-ui}pre{font:14px/1.55 monospace}</style>'
+              '<h1>Lab 6 registration coverage</h1>'
+              '<pre>$ python -m pytest -q --cov=registration --cov-report=term-missing\n\n'
+              + report + '</pre>', encoding="utf-8"
+          )
+          PY
+          google-chrome --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=960,420 --screenshot=coverage.png "file://$PWD/coverage.html"
+          base64 -w 3000 coverage.png | sed 's/^/COVERAGE_PNG /'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lab6-evidence
+          path: |
+            ${{ runner.temp }}/lab6-evidence/coverage.png
+            ${{ runner.temp }}/lab6-evidence/coverage.txt
+            ${{ runner.temp }}/lab6-evidence/behave.txt

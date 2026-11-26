@@ -1,0 +1,4 @@
+88c0f3a54aab TDD cycle 1: register a course
+8d779dc8e349 TDD cycle 2: enforce the 18-hour limit
+063370826390 TDD cycle 3: refuse duplicate courses
+4511506b206a TDD cycle 4: drop registered courses
