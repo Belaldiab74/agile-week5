@@ -1,0 +1,6 @@
+features/registration.feature  .......
+
+1 feature passed, 0 failed, 0 skipped
+7 scenarios passed, 0 failed, 0 skipped
+28 steps passed, 0 failed, 0 skipped
+Took 0min 0.001s
