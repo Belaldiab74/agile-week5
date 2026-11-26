@@ -1,6 +1,6 @@
 import pytest
 
-from fees import calc as current_fee
+from fees import tuition_fee
 from legacy_fees import calc
 
 
@@ -16,4 +16,4 @@ from legacy_fees import calc
 def test_characterize_legacy_tuition(hours, code, summer, expected):
     courses = [{"h": hour} for hour in hours]
     assert calc(courses, code, 2026, summer, None) == expected
-    assert current_fee(courses, code, summer, None) == expected
+    assert tuition_fee(courses, code, summer, None) == expected
