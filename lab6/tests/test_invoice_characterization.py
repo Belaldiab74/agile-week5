@@ -43,3 +43,11 @@ def test_invoice_uses_injected_writer(student):
     assert make_invoice(student, "regular", writer=writer) == 7200
 
     assert writer.saved == {"2023001": "Invoice for 2023001: 7200 EGP"}
+
+
+def test_sibling_fee_is_25_percent_off_regular_fee(student):
+    writer = FakeWriter()
+
+    assert make_invoice(student, "sibling", writer=writer) == 5400
+
+    assert writer.saved == {"2023001": "Invoice for 2023001: 5400 EGP"}
