@@ -98,7 +98,6 @@ jobs:
           )
           PY
           google-chrome --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=960,420 --screenshot=coverage.png "file://$PWD/coverage.html"
-          base64 -w 3000 coverage.png | sed 's/^/COVERAGE_PNG /'
       - uses: actions/upload-artifact@v4
         with:
           name: lab6-evidence
