@@ -27,3 +27,19 @@ def test_invoice_total_and_saved_text(student, kind, expected, tmp_path, monkeyp
     assert (tmp_path / "invoice_2023001.txt").read_text(encoding="utf-8") == (
         f"Invoice for 2023001: {expected} EGP"
     )
+
+
+class FakeWriter:
+    def __init__(self):
+        self.saved = {}
+
+    def write(self, student_id, text):
+        self.saved[student_id] = text
+
+
+def test_invoice_uses_injected_writer(student):
+    writer = FakeWriter()
+
+    assert make_invoice(student, "regular", writer=writer) == 7200
+
+    assert writer.saved == {"2023001": "Invoice for 2023001: 7200 EGP"}
