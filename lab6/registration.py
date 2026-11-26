@@ -1,6 +1,9 @@
 """Course registration for the Student Services App."""
 
 
+MAX_HOURS = 18
+
+
 class RegistrationError(Exception):
     """A registration or drop request violated a rule."""
 
@@ -19,4 +22,6 @@ class Student:
 
     def register(self, code, hours):
         """Register a course with its credit hours."""
+        if self.total_hours + hours > MAX_HOURS:
+            raise RegistrationError(f"credit-hour limit is {MAX_HOURS}")
         self.courses[code] = hours
