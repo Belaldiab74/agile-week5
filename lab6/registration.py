@@ -22,6 +22,8 @@ class Student:
 
     def register(self, code, hours):
         """Register a course with its credit hours."""
+        if code in self.courses:
+            raise RegistrationError(f"{code} is already registered")
         if self.total_hours + hours > MAX_HOURS:
             raise RegistrationError(f"credit-hour limit is {MAX_HOURS}")
         self.courses[code] = hours
