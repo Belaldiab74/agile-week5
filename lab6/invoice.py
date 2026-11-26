@@ -6,21 +6,31 @@ INTERNATIONAL_RATE = 2000
 INTERNATIONAL_SERVICE_FEE = 5000
 
 
+class RegularPolicy:
+    def fee(self, hours):
+        return hours * FEE_PER_HOUR
+
+
+class ScholarshipPolicy:
+    def fee(self, hours):
+        return hours * FEE_PER_HOUR * SCHOLARSHIP_FRACTION
+
+
+class InternationalPolicy:
+    def fee(self, hours):
+        return hours * INTERNATIONAL_RATE + INTERNATIONAL_SERVICE_FEE
+
+
 def make_invoice(student, kind):
-    total = 0
-    for code in student.courses:
-        h = student.courses[code]
-        if kind == "regular":
-            total = total + h * FEE_PER_HOUR
-        elif kind == "scholarship":
-            total = total + h * FEE_PER_HOUR * SCHOLARSHIP_FRACTION
-        elif kind == "international":
-            total = total + h * INTERNATIONAL_RATE
-    if kind == "international":
-        total = total + INTERNATIONAL_SERVICE_FEE
-    text = "Invoice for " + student.student_id + ": " + str(int(total)) + " EGP"
-    f = open("invoice_" + student.student_id + ".txt", "w")
-    f.write(text)
-    f.close()
+    if kind == "regular":
+        policy = RegularPolicy()
+    elif kind == "scholarship":
+        policy = ScholarshipPolicy()
+    else:
+        policy = InternationalPolicy()
+    total = policy.fee(student.total_hours)
+    text = f"Invoice for {student.student_id}: {int(total)} EGP"
+    with open(f"invoice_{student.student_id}.txt", "w", encoding="utf-8") as file:
+        file.write(text)
     print(text)
     return total
